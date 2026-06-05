@@ -1,0 +1,203 @@
+<!--<iframe src="/frame/mh3/1?foil=true"  width="500" height="800" style="overflow:hidden; border: none; margin: 0; padding: 0;">-->
+
+<!--</iframe>-->
+
+<!--<style>-->
+<!--    .card-container {-->
+<!--        width: 500px;-->
+<!--        height: 800px;-->
+<!--    }-->
+
+<!--    .card-name {-->
+<!--        text-align: center;-->
+<!--    }-->
+<!--</style>-->
+
+<!--
+https://eugenkiss.github.io/7guis/tasks/#crud
+-->
+{% raw %}
+<script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3.5.35/dist/vue.esm-browser.js",
+        "vue/server-renderer": "https://cdn.jsdelivr.net/npm/@vue/server-renderer@3.5.35/dist/server-renderer.esm-browser.js"
+      },
+      "scopes": {}
+    }
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="module">
+    import {createApp} from 'vue'
+
+    createApp({
+        data() {
+            return {
+                names: ['1, tdm', '1, mh3', '1, mh3'],
+                selected: '',
+                prefix: '',
+                first: '',
+                last: '',
+                cardName: '',
+                price: '',
+                img: '',
+                rarity: '',
+            }
+        },
+        computed: {
+            filteredNames() {
+                console.log(this.names)
+                return this.names.filter((n) =>
+                    n.toLowerCase().startsWith(this.prefix.toLowerCase())
+                )
+            }
+        },
+        watch: {
+            selected(name) {
+                [this.last, this.first] = name.split(', ');
+                this.fetchCard();
+            }
+        },
+        methods: {
+            create() {
+                if (this.hasValidInput()) {
+                    const fullName = `${this.last}, ${this.first}`
+                    if (!this.names.includes(fullName)) {
+                        this.names.push(fullName)
+                        this.first = this.last = ''
+                    }
+                }
+            },
+            update() {
+                if (this.hasValidInput() && this.selected) {
+                    const i = this.names.indexOf(this.selected)
+                    this.names[i] = this.selected = `${this.last}, ${this.first}`
+                }
+            },
+            del() {
+                if (this.selected) {
+                    const i = this.names.indexOf(this.selected)
+                    this.names.splice(i, 1)
+                    this.selected = this.first = this.last = ''
+                }
+            },
+            hasValidInput() {
+                return this.first.trim() && this.last.trim()
+            },
+            async fetchCard() {
+                let json = await (await fetch(`/api/${this.first}/${this.last}`)).json();
+                console.log(json);
+                this.cardName = json.name;
+                this.price = json.price;
+                this.img = json.image;
+                this.rarity = json.rarity;
+            }
+        }
+    }).mount('#app');
+
+    // https://api.scryfall.com/sets
+
+    $(document).ready(function () {
+        $.get("https://api.scryfall.com/sets", {}, function (res) {
+            var dataList = $("#packtypes");
+            dataList.empty();
+            if (res.data.length) {
+                for (var i = 0, len = res.data.length; i < len; i++) {
+                    var opt = $("<option></option>").attr("value", res.data[i].code + " - " + res.data[i].name);
+                    dataList.append(opt);
+                }
+            }
+        }, "json");
+
+    });
+</script>
+
+<div id="app">
+    <div><input v-model="prefix" placeholder="Search Packs"></div>
+
+    <select size="5" v-model="selected">
+        <option v-for="name in filteredNames" :key="name">{{ name }}</option>
+    </select>
+
+    <label>Pack Type: <input v-model="first" id="type" list="packtypes"></label>
+    <label>Cards: <input v-model="last"></label>
+
+    <datalist id="packtypes">
+    </datalist>
+
+    <div class="buttons">
+        <button @click="create">Create</button>
+        <button @click="update">Update</button>
+        <button @click="del">Delete</button>
+    </div>
+
+    <div class="card-container">
+        <div class="card foil">
+            <img :src="img" width="350px" id="card">
+        </div>
+
+        <p class="card-name {{ rarity }}">{{ cardName || '' }} - ${{ price || 0 }}</p>
+    </div>
+</div>
+
+<style>
+    * {
+        font-size: inherit;
+    }
+
+    input {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    select {
+        float: left;
+        margin: 0 1em 1em 0;
+        width: 14em;
+    }
+
+    .buttons {
+        clear: both;
+    }
+
+    button + button {
+        margin-left: 5px;
+    }
+
+    .card {
+        width: 350px;
+    }
+
+    .foil {
+        background: linear-gradient(115deg, transparent 20%, oklch(0.7 0.15 200) 45%, oklch(0.75 0.18 320) 55%, transparent 80%),
+        conic-gradient(from 45deg, oklch(0.8 0.12 60), oklch(0.7 0.15 180), oklch(0.8 0.12 300), oklch(0.8 0.12 60));
+    }
+
+    .foil {
+        mix-blend-mode: color-dodge;
+        filter: brightness(0.8) contrast(1.4);
+    }
+
+
+    .foil {
+        background-size: 200% 200%;
+        animation: shimmer 6s ease-in-out infinite;
+    }
+
+    .foil > img {
+        z-index: -1;
+        position: relative;
+        mix-blend-mode: hard-light;
+    }
+
+    @keyframes shimmer {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+</style>
+{% endraw %}

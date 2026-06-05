@@ -1,0 +1,9 @@
+<html style="overflow: hidden;">
+<div class="card-container">
+    <div class="card {{ 'foil' if foil else '' }}">
+        <img src="{{ image }}" width="350px">
+    </div>
+
+    <p class="card-name">{{ name }} - ${{ price }}</p>
+</div>
+</html>
